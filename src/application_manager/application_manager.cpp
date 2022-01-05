@@ -25,12 +25,12 @@ namespace BlockchainNode
         _communicator.start_listening(_node_port);
     }
 
-    void ApplicationManager::set_on_new_block_received_callback(void (*on_new_block_received_callback)(const BlockchainNode::Block &new_block, const std::string &sender_address))
+    void ApplicationManager::set_on_new_block_received_callback(void (*on_new_block_received_callback)(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Block &new_block, const std::string &sender_address))
     {
         _on_new_block_received_callback = on_new_block_received_callback;
     }
 
-    void ApplicationManager::set_on_new_transaction_received_callback(void (*on_new_transaction_received_callback)(const BlockchainNode::Transaction &new_transaction, const std::string &sender_address))
+    void ApplicationManager::set_on_new_transaction_received_callback(void (*on_new_transaction_received_callback)(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Transaction &new_transaction, const std::string &sender_address))
     {
         _on_new_transaction_received_callback = on_new_transaction_received_callback;
     }
@@ -48,12 +48,12 @@ namespace BlockchainNode
         if (data[0] == 0)
         {
             Transaction transaction = MessageSerializer::bytes_to_transaction(data + 1);
-            _on_new_transaction_received_callback(transaction, "");
+            _on_new_transaction_received_callback(this, transaction, "");
         }
         else if (data[0] == 0x01)
         {
             Block block = MessageSerializer::bytes_to_block(data + 1);
-            _on_new_block_received_callback(block, "");
+            _on_new_block_received_callback(this, block, "");
         }
     }
 }
