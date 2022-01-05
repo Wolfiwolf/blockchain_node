@@ -27,8 +27,8 @@ namespace BlockchainNode
         void set_on_new_block_received_callback(void (*on_new_block_received_callback)(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Block &newBlock, const std::string &senderAddress));
         void set_on_new_transaction_received_callback(void (*on_new_transaction_received_callback)(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Transaction &newTransaction, const std::string &senderAddress));
 
-        void broadcast(const std::string &msg);
-        void broadcast_except(const std::string &msg, const std::string &address);
+        static void broadcast_new_block(const std::string &msg);
+        static void broadcast_new_transaction(const std::string &msg, const std::string &address);
 
     private:
         Communicator _communicator;

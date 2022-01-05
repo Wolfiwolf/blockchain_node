@@ -35,14 +35,16 @@ namespace BlockchainNode
         _on_new_transaction_received_callback = on_new_transaction_received_callback;
     }
 
-    void ApplicationManager::broadcast(const std::string &msg)
+    void ApplicationManager::broadcast_new_block(const std::string &msg)
     {
+
     }
 
-    void ApplicationManager::broadcast_except(const std::string &msg, const std::string &address)
+    void ApplicationManager::broadcast_new_transaction(const std::string &msg, const std::string &address)
     {
-    }
 
+    }
+    
     void ApplicationManager::on_message_received(uint8_t *data, int data_size)
     {
         if (data[0] == 0)

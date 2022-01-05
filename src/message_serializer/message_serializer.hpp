@@ -1,7 +1,7 @@
-#include "../models/models.h"
-
 #ifndef MESSAGE_SERIALIZER_H
 #define MESSAGE_SERIALIZER_H
+
+#include "../models/models.h"
 
 namespace BlockchainNode
 {
