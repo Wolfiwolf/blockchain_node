@@ -61,6 +61,8 @@ namespace BlockchainNode {
         offset += (64 + 4 + 4) * 3;
 
         memcpy(&block.minerPublicKey, bytes + offset, 32);
+
+        return block;
     }
 
     void MessageSerializer::transaction_to_bytes(const Transaction &transaction, uint8_t *output_bytes)
@@ -94,6 +96,8 @@ namespace BlockchainNode {
         offset += sizeof(int);
 
         memcpy(&transaction.gass, bytes + offset, sizeof(int));
+
+        return transaction;
     }
 
 
