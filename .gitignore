@@ -1,0 +1,7 @@
+blockchain_node
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+/.vscode
+/build
+/CMakeFiles
