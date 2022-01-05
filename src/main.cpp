@@ -4,8 +4,8 @@
 #include "validator/validator.hpp"
 #include "models/models.h"
 
-void on_new_block_receive(const BlockchainNode::Block &newBlock, const std::string &senderAddress);
-void on_new_transaction_receive(const BlockchainNode::Transaction &newTransaction, const std::string &senderAddress);
+void on_new_block_receive(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Block &newBlock, const std::string &senderAddress);
+void on_new_transaction_receive(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Transaction &newTransaction, const std::string &senderAddress);
 
 int main(int argc, char **argv)
 {
@@ -18,7 +18,10 @@ int main(int argc, char **argv)
     app_manager.start();
 }
 
-void on_new_block_receive(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Block &new_block, const std::string &sender_address)
+void on_new_block_receive(
+    BlockchainNode::ApplicationManager *app_manager,
+    const BlockchainNode::Block &new_block,
+    const std::string &sender_address)
 {
     bool res = BlockchainNode::Validator::is_block_valid(new_block);
 
@@ -26,7 +29,10 @@ void on_new_block_receive(BlockchainNode::ApplicationManager *app_manager, const
         BlockchainNode::BlockchainStorage::add_block(new_block);
 }
 
-void on_new_transaction_receive(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Transaction &new_transaction, const std::string &sender_address)
+void on_new_transaction_receive(
+    BlockchainNode::ApplicationManager *app_manager,
+    const BlockchainNode::Transaction &new_transaction,
+    const std::string &sender_address)
 {
     bool res = BlockchainNode::Validator::is_transaction_valid(new_transaction);
 

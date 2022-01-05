@@ -37,7 +37,7 @@ namespace BlockchainNode
 
             LOG_WNL("Client connected on port");
 
-            std::thread thrd(deal_with_client, client_socket);
+            std::thread thrd(deal_with_client, this, client_socket);
         }
 
         close(listening);
@@ -52,7 +52,7 @@ namespace BlockchainNode
         _on_message_received_callback = on_message_received_callback;
     }
 
-    void Communicator::deal_with_client(int client_socket)
+    void Communicator::deal_with_client(Communicator *communicator, int client_socket)
     {
         uint8_t buf[4096];
 
@@ -73,7 +73,7 @@ namespace BlockchainNode
 
         LOG_WNL("Data received: " << std::string((char *)buf, 0, bytesReceived));
 
-        _on_message_received_callback(buf, bytesReceived);
+        communicator->_on_message_received_callback(buf, bytesReceived);
 
         close(client_socket);
     }

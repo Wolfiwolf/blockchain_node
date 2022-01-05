@@ -23,7 +23,7 @@ namespace BlockchainNode {
     private:
         void (*_on_message_received_callback)(uint8_t *data, int data_size);
 
-        void deal_with_client(int client_socket);
+        static void deal_with_client(Communicator *communicator, int client_socket);
     };
 }
 

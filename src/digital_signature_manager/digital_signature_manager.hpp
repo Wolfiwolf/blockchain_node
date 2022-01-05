@@ -11,6 +11,7 @@ namespace BlockchainNode
     class DigitalSignatureManager
     {
     public:
+        DigitalSignatureManager();
         static Wallet generate_wallet();
 
     private:

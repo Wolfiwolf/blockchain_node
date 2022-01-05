@@ -15,7 +15,6 @@ namespace BlockchainNode
         int reward_to_miner;
         int timestamp;
         Transaction transactions[3];
-        std::string hash;
         uint8_t minerPublicKey[32];
     };
 
