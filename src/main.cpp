@@ -13,16 +13,12 @@ int main(int argc, char **argv)
     BlockchainNode::RestApiServer apiServer;
 
     apiServer.start_server(80);
-
-
-    while(true);
-    /*
+    
     BlockchainNode::Wallet wallet = BlockchainNode::DigitalSignatureManager::generate_wallet();
 
     BlockchainNode::ApplicationManager app_manager(5555);
 
     app_manager.set_on_new_block_received_callback(BlockchainNode::ApplicationLogic::on_new_block_receive);
     app_manager.set_on_new_transaction_received_callback(BlockchainNode::ApplicationLogic::on_new_transaction_receive);
-    app_manager.start();
-    */
+    app_manager.start();  
 }

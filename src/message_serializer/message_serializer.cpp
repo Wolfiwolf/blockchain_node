@@ -78,7 +78,7 @@ namespace BlockchainNode {
         memcpy(output_bytes + offset, &transaction.amount, sizeof(int));
         offset += sizeof(int);
 
-        memcpy(output_bytes + offset, &transaction.gass, sizeof(int));
+        memcpy(output_bytes + offset, &transaction.gas, sizeof(int));
     }
 
     Transaction MessageSerializer::bytes_to_transaction(const uint8_t *bytes)
@@ -95,7 +95,7 @@ namespace BlockchainNode {
         memcpy(&transaction.amount, bytes + offset, sizeof(int));
         offset += sizeof(int);
 
-        memcpy(&transaction.gass, bytes + offset, sizeof(int));
+        memcpy(&transaction.gas, bytes + offset, sizeof(int));
 
         return transaction;
     }

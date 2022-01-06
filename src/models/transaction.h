@@ -9,7 +9,7 @@ namespace BlockchainNode {
         uint8_t senderPublicKey[32];
         uint8_t receiverPublicKey[32];
         int amount;
-        int gass;
+        int gas;
     };
 
 }

@@ -73,7 +73,6 @@ namespace BlockchainNode
         #endif
 
 
-
         Wallet wal;
         memcpy(wal.publicKey, pubkey_serialized, 32);
         memcpy(wal.publicKey, private_key, 32);
