@@ -30,7 +30,7 @@ namespace BlockchainNode {
         memcpy(output_bytes + offset, &block.transactions, (64 + 4 + 4) * 3);
         offset += (64 + 4 + 4) * 3;
 
-        memcpy(output_bytes + offset, &block.minerPublicKey, 32);
+        memcpy(output_bytes + offset, &block.minerPublicKey, 33);
     }
 
     Block MessageSerializer::bytes_to_block(const uint8_t *bytes) 
@@ -60,7 +60,7 @@ namespace BlockchainNode {
         memcpy(&block.transactions, bytes + offset, (64 + 4 + 4) * 3);
         offset += (64 + 4 + 4) * 3;
 
-        memcpy(&block.minerPublicKey, bytes + offset, 32);
+        memcpy(&block.minerPublicKey, bytes + offset, 33);
 
         return block;
     }
@@ -69,11 +69,11 @@ namespace BlockchainNode {
     {
         int offset = 0;
 
-        memcpy(output_bytes + offset, &transaction.senderPublicKey, 32);
-        offset += 32;
+        memcpy(output_bytes + offset, &transaction.sender_public_key, 33);
+        offset += 33;
 
-        memcpy(output_bytes + offset, &transaction.receiverPublicKey, 32);
-        offset += 32;
+        memcpy(output_bytes + offset, &transaction.receiver_public_key, 33);
+        offset += 33;
 
         memcpy(output_bytes + offset, &transaction.amount, sizeof(int));
         offset += sizeof(int);
@@ -86,11 +86,11 @@ namespace BlockchainNode {
         Transaction transaction;
         int offset = 0;
 
-        memcpy(&transaction.senderPublicKey, bytes + offset, 32);
-        offset += 32;
+        memcpy(&transaction.sender_public_key, bytes + offset, 33);
+        offset += 33;
 
-        memcpy(&transaction.receiverPublicKey, bytes + offset, 32);
-        offset += 32;
+        memcpy(&transaction.receiver_public_key, bytes + offset, 33);
+        offset += 33;
 
         memcpy(&transaction.amount, bytes + offset, sizeof(int));
         offset += sizeof(int);

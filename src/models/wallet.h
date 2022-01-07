@@ -7,7 +7,7 @@ namespace BlockchainNode {
 
     struct Wallet {
         uint8_t privateKey[32];
-        uint8_t publicKey[32];
+        uint8_t publicKey[33];
     };
 
 }

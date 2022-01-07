@@ -10,8 +10,8 @@ namespace BlockchainNode
     {
         int id;
         int nonce;
-        std::string hash;
-        std::string hash_of_previous_block;
+        uint8_t hash[32];
+        uint8_t hash_of_previous_block[32];
         int reward_to_miner;
         int timestamp;
         Transaction transactions[3];
