@@ -10,9 +10,28 @@
 #include "../debug/logger/logger.hpp"
 #include "digital_signature_manager.hpp"
 #include "../vendor/sha256/sha256.hpp"
+#include "../hasher/hasher.hpp"
 
 namespace BlockchainNode
 {
+    int char2int(char input)
+    {
+        if (input >= '0' && input <= '9')
+            return input - '0';
+        if (input >= 'A' && input <= 'F')
+            return input - 'A' + 10;
+        if (input >= 'a' && input <= 'f')
+            return input - 'a' + 10;
+        throw std::invalid_argument("Invalid input string");
+    }
+    void hex2bin(const char *src, char *target)
+    {
+        while (*src && src[1])
+        {
+            *(target++) = char2int(*src) * 16 + char2int(src[1]);
+            src += 2;
+        }
+    }
 
     DigitalSignatureManager::DigitalSignatureManager()
     {
@@ -76,30 +95,93 @@ namespace BlockchainNode
 
     void DigitalSignatureManager::sign_transaction(uint8_t *private_key, Transaction *transaction)
     {
-        std::string hash = Vendor::sha256(std::string((char *)(transaction->sender_public_key)));
-        hash = Vendor::sha256(std::string((char *)(transaction->receiver_public_key)) + hash);
-        hash = Vendor::sha256(std::to_string(transaction->amount) + hash);
-        hash = Vendor::sha256(std::to_string(transaction->gas) + hash);
+        std::string hash = Hasher::hash_transaction(*transaction);
+        
 
-        memcpy(transaction->hash, hash.c_str(), 33);
+        memcpy(transaction->hash, hash.c_str(), 32);
 
         transaction->sender_signature_len = 72;
         sign_data(private_key, transaction->hash, 32, transaction->sender_signature, &transaction->sender_signature_len);
     }
 
-    bool DigitalSignatureManager::verify_signature(uint8_t *public_key, uint8_t *signature, int signature_len, uint8_t *hash)
+    bool DigitalSignatureManager::verify_signature(uint8_t *public_key, uint8_t *signature, size_t signature_len, uint8_t *hash)
     {
         secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
         secp256k1_pubkey pubkey;
         secp256k1_ecdsa_signature sig;
 
-        secp256k1_ec_pubkey_parse(ctx, &pubkey, public_key, 33);
-        secp256k1_ecdsa_signature_parse_der(ctx, &sig, signature, (size_t)signature_len);
+        if (secp256k1_ec_pubkey_parse(ctx, &pubkey, public_key, 33) == 0) {
+            LOG_WNL("Error parsing public key!");
+        }
+
+        if (secp256k1_ecdsa_signature_parse_der(ctx, &sig, signature, signature_len) == 0) {
+            LOG_WNL("Error parsing signature!");
+        }
 
         int res = secp256k1_ecdsa_verify(ctx, &sig, hash, &pubkey);
 
+
         return res == 1;
+    }
+
+    std::string DigitalSignatureManager::private_key_to_hex(uint8_t *private_key)
+    {
+        std::string private_key_hex("");
+        for (int i = 0; i < 32; ++i)
+        {
+            char l_pCharRes[3];
+            sprintf(l_pCharRes, "%X", (int)private_key[i]);
+            std::string temp(l_pCharRes);
+
+            private_key_hex += (temp.size() == 1 ? "0" + temp : temp);
+        }
+        return "0x" + private_key_hex;
+    }
+
+    std::string DigitalSignatureManager::public_key_to_hex(uint8_t *public_key)
+    {
+        std::string public_key_hex("");
+        for (int i = 0; i < 33; ++i)
+        {
+            char l_pCharRes[3];
+            sprintf(l_pCharRes, "%X", (int)public_key[i]);
+            std::string temp(l_pCharRes);
+
+            public_key_hex += (temp.size() == 1 ? "0" + temp : temp);
+        }
+        return "0x" + public_key_hex;
+    }
+
+    void DigitalSignatureManager::hex_to_private_key(const std::string &private_key, uint8_t *output)
+    {
+        std::string private_key_raw = private_key.substr(2, private_key.length() - 2); 
+        hex2bin(private_key_raw.c_str(), (char*)output);
+    }
+    void DigitalSignatureManager::hex_to_public_key(const std::string &public_key, uint8_t *output)
+    {
+        std::string public_key_raw = public_key.substr(2, public_key.length() - 2); 
+        hex2bin(public_key_raw.c_str(), (char*)output);
+    }
+
+    void DigitalSignatureManager::hex_to_signature(const std::string &signature, uint8_t *output)
+    {
+        std::string signature_raw = signature.substr(2, signature.length() - 2); 
+        hex2bin(signature_raw.c_str(), (char*)output);
+    }
+
+    std::string DigitalSignatureManager::signature_to_hex(uint8_t *signature, int signatire_len)
+    {
+        std::string signature_hex("");
+        for (int i = 0; i < signatire_len; ++i)
+        {
+            char l_pCharRes[3];
+            sprintf(l_pCharRes, "%X", (int)signature[i]);
+            std::string temp(l_pCharRes);
+
+            signature_hex += (temp.size() == 1 ? "0" + temp : temp);
+        }
+        return "0x" + signature_hex;
     }
 
     void DigitalSignatureManager::sign_data(uint8_t *private_key, uint8_t *data_to_sign, int data_size, uint8_t *output, size_t *sig_size)
@@ -109,7 +191,7 @@ namespace BlockchainNode
         secp256k1_ecdsa_signature sig;
 
         secp256k1_ecdsa_sign(ctx, &sig, data_to_sign, private_key, NULL, NULL);
-        secp256k1_ecdsa_signature_serialize_der(ctx, output, (size_t *)sig_size, &sig);
+        secp256k1_ecdsa_signature_serialize_der(ctx, output, sig_size, &sig);
 
         secp256k1_context_destroy(ctx);
     }
@@ -126,6 +208,7 @@ namespace BlockchainNode
         {
             privateKey[i] = dist(rng);
         }
+
 
 #if DEBUG_MODE == 1
         LOG_WNL("PRIVATE KEY:");

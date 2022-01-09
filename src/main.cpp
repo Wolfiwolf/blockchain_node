@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 
     BlockchainNode::RestApiServer apiServer;
 
-    apiServer.start_server(80);
+    apiServer.start_server(8080);
 
     BlockchainNode::ApplicationManager app_manager(5555);
 

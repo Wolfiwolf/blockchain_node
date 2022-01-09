@@ -2,6 +2,8 @@
 #define HASHER_H
 
 #include <string>
+#include "../vendor/sha256/sha256.hpp"
+#include "../models/models.h"
 
 namespace BlockchainNode
 {
@@ -11,7 +13,7 @@ namespace BlockchainNode
     public:
         Hasher();
 
-        static void hash_with_sha256(uint8_t *data, uint8_t *output);
+        static std::string hash_transaction(const Transaction &transaction);
     };
 
 }
