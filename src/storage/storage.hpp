@@ -7,13 +7,14 @@
 
 namespace BlockchainNode {
 
-    class BlockchainStorage
+    class Storage
     {
     public:
-        BlockchainStorage();
+        Storage();
 
         static void add_block(const Block &block);
         static void add_transaction(const Transaction &transaction);
+        static bool is_transaction_in_storage(const Transaction &transaction);
 
     private:
         static std::vector<Block> _blocks;

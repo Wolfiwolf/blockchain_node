@@ -9,8 +9,9 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <string>
+#include <vector>
 
-#include "../models/block.h"
+#include "../models/models.h"
 #include "../communicator/communicator.hpp"
 
 namespace BlockchainNode
@@ -33,6 +34,8 @@ namespace BlockchainNode
     private:
         Communicator _communicator;
         int _node_port;
+
+        std::vector<BlockchainNodeContactInfo> _other_nodes;
 
         void (*_on_new_block_received_callback)(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Block &new_block, const std::string &sender_address);
         void (*_on_new_transaction_received_callback)(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Transaction &new_transaction, const std::string &sender_address);

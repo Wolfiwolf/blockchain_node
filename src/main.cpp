@@ -1,6 +1,5 @@
 #include "digital_signature_manager/digital_signature_manager.hpp"
 #include "application_manager/application_manager.hpp"
-#include "blockchain_storage/blockchain_storage.hpp"
 #include "validator/validator.hpp"
 #include "models/models.h"
 #include "application_logic/application_logic.hpp"

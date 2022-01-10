@@ -2,7 +2,7 @@
 #include "application_logic.hpp"
 
 #include "../validator/validator.hpp"
-#include "../blockchain_storage/blockchain_storage.hpp"
+#include "../storage/storage.hpp"
 
 namespace BlockchainNode
 {
@@ -17,7 +17,7 @@ namespace BlockchainNode
             bool res = Validator::is_block_valid(new_block);
 
             if (res)
-                BlockchainStorage::add_block(new_block);
+                Storage::add_block(new_block);
         }
 
         void on_new_transaction_receive(
@@ -25,10 +25,14 @@ namespace BlockchainNode
             const BlockchainNode::Transaction &new_transaction,
             const std::string &sender_address)
         {
-            bool res = Validator::is_transaction_valid(new_transaction);
+            if (!Validator::is_transaction_valid(new_transaction))
+                return;
 
-            if (res)
-                BlockchainStorage::add_transaction(new_transaction);
+            if (!Storage::is_transaction_in_storage(new_transaction))
+            {
+                Storage::add_transaction(new_transaction);
+                app_manager->broadcast_new_transaction(new_transaction);
+            }
         }
 
     }

@@ -9,7 +9,7 @@
 #include "../validator/validator.hpp"
 #include "../digital_signature_manager/digital_signature_manager.hpp"
 #include "../json_operations/json_operations.hpp"
-#include "../blockchain_storage/blockchain_storage.hpp"
+#include "../storage/storage.hpp"
 #include "../application_manager/application_manager.hpp"
 
 using namespace web::http::experimental::listener;
@@ -97,9 +97,6 @@ namespace BlockchainNode
 
     void RestApiServer::on_new_transaction_request(http_request *request, const TransactionWeb &transactionWeb)
     {
-        LOG_WNL("Time stamp:");
-        LOG_WNL(transactionWeb.timestamp);
-
         Transaction transaction;
 
         DigitalSignatureManager::hex_to_signature(transactionWeb.sender_signature, transaction.sender_signature);
@@ -114,7 +111,7 @@ namespace BlockchainNode
 
         if (Validator::is_transaction_valid(transaction))
         {
-            BlockchainStorage::add_transaction(transaction);
+            Storage::add_transaction(transaction);
             ApplicationManager::broadcast_new_transaction(transaction);
             request->reply(status_codes::OK);
         }

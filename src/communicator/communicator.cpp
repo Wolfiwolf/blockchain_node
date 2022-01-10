@@ -43,8 +43,51 @@ namespace BlockchainNode
         close(listening);
     }
 
-    void Communicator::send_to(const char *url, const char *data, int data_size)
+    bool Communicator::send_to(const char *ip_address, int port, const char *data, int data_size)
     {
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock == -1)
+        {
+            return 1;
+        }
+
+        std::string ipAddress = ip_address;
+
+        sockaddr_in hint;
+        hint.sin_family = AF_INET;
+        hint.sin_port = htons(port);
+        inet_pton(AF_INET, ipAddress.c_str(), &hint.sin_addr);
+
+        int connectRes = connect(sock, (sockaddr *)&hint, sizeof(hint));
+        if (connectRes == -1)
+        {
+            return 1;
+        }
+
+        char buf[4096];
+
+        int sendRes = send(sock, data, data_size + 1, 0);
+        if (sendRes == -1)
+        {
+            std::cout << "Could not send to server! Whoops!\r\n";
+            return false;
+        }
+
+        memset(buf, 0, 4096);
+        int bytesReceived = recv(sock, buf, 4096, 0);
+        if (bytesReceived == -1)
+        {
+            std::cout << "There was an error getting response from server\r\n";
+            return false;
+        }
+        else
+        {
+            std::cout << "SERVER> " << std::string(buf, bytesReceived) << "\r\n";
+        }
+
+        close(sock);
+        
+        return true;
     }
 
     void Communicator::set_on_message_received_callback(void (*on_message_received_callback)(uint8_t *data, int data_size))
