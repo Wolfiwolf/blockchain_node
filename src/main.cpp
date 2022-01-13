@@ -8,13 +8,22 @@
 
 int main(int argc, char **argv)
 {
+    if (argc != 3) 
+    {
+        LOG_WNL("Not enough arguments!");
+        return 1;
+    }
+
+    int p2p_port = std::stoi(argv[1]);
+    int api_port = std::stoi(argv[2]);
+
     BlockchainNode::Wallet wallet = BlockchainNode::DigitalSignatureManager::generate_wallet();
 
     BlockchainNode::RestApiServer apiServer;
 
-    apiServer.start_server(8080);
+    apiServer.start_server(api_port);
 
-    BlockchainNode::ApplicationManager app_manager(5555);
+    BlockchainNode::ApplicationManager app_manager(p2p_port);
 
     app_manager.set_on_new_block_received_callback(BlockchainNode::ApplicationLogic::on_new_block_receive);
     app_manager.set_on_new_transaction_received_callback(BlockchainNode::ApplicationLogic::on_new_transaction_receive);

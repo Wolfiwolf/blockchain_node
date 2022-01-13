@@ -27,9 +27,10 @@ namespace BlockchainNode
         static void handle_post_request(http_request request);
         static void handle_get_request(http_request request);
 
-        static void on_balance_of_request(http_request *request, const std::string &address);
+        static void on_unspent_transactions_request(http_request *request, const std::string &public_key);
 
-        static void on_new_transaction_request(http_request *request, const TransactionWeb &transactionWeb);
+        static void on_new_node_request(http_request *request, const BlockchainNodeContactInfo &nodeContactInfo);
+        static void on_new_transaction_request(http_request *request, const Transaction &transaction);
         
         static std::vector<std::string> get_path_parts(const std::string &path);
     };

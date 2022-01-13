@@ -2,6 +2,7 @@
 #define BLOCK_H
 
 #include <string>
+#include <vector>
 #include "../models/transaction.h"
 
 namespace BlockchainNode
@@ -9,13 +10,11 @@ namespace BlockchainNode
     struct Block
     {
         int id;
-        int nonce;
-        uint8_t hash[32];
-        uint8_t hash_of_previous_block[32];
-        int reward_to_miner;
         int timestamp;
-        Transaction transactions[3];
-        uint8_t minerPublicKey[32];
+        int nonce;
+        std::string hash;
+        std::string hash_of_previous_block;
+        std::vector<Transaction> transactions;
     };
 
 }

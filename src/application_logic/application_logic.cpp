@@ -3,6 +3,7 @@
 
 #include "../validator/validator.hpp"
 #include "../storage/storage.hpp"
+#include "../debug/logger/logger.hpp"
 
 namespace BlockchainNode
 {
@@ -27,12 +28,14 @@ namespace BlockchainNode
         {
             if (!Validator::is_transaction_valid(new_transaction))
                 return;
-
+                
             if (!Storage::is_transaction_in_storage(new_transaction))
             {
                 Storage::add_transaction(new_transaction);
                 app_manager->broadcast_new_transaction(new_transaction);
             }
+
+            const std::vector<Transaction> *transactions = Storage::get_uncomfirmed_transactions();
         }
 
     }

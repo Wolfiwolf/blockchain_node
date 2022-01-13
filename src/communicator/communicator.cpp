@@ -10,7 +10,7 @@ namespace BlockchainNode
     {
     }
 
-    void Communicator::start_listening(int litening_port)
+    void Communicator::start_listening(int listening_port)
     {
         int listening = socket(AF_INET, SOCK_STREAM, 0);
         if (listening == -1)
@@ -21,10 +21,13 @@ namespace BlockchainNode
 
         sockaddr_in hint;
         hint.sin_family = AF_INET;
-        hint.sin_port = htons(litening_port);
+        hint.sin_port = htons(listening_port);
         inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
 
-        bind(listening, (sockaddr *)&hint, sizeof(hint));
+        if (bind(listening, (sockaddr *)&hint, sizeof(hint)) < 0) {
+            LOG_WNL("ERROR! Binding socket failed!");
+            return;
+        }
 
         listen(listening, SOMAXCONN);
 
@@ -33,11 +36,12 @@ namespace BlockchainNode
             sockaddr_in client;
             socklen_t clientSize = sizeof(client);
 
+            LOG_WNL("Waiting fro connection...");
             int client_socket = accept(listening, (sockaddr *)&client, &clientSize);
-
-            LOG_WNL("Client connected on port");
+            LOG_WNL("Connected!");
 
             std::thread thrd(deal_with_client, this, client_socket);
+            thrd.detach();
         }
 
         close(listening);
@@ -48,7 +52,7 @@ namespace BlockchainNode
         int sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock == -1)
         {
-            return 1;
+            return false;
         }
 
         std::string ipAddress = ip_address;
@@ -57,32 +61,22 @@ namespace BlockchainNode
         hint.sin_family = AF_INET;
         hint.sin_port = htons(port);
         inet_pton(AF_INET, ipAddress.c_str(), &hint.sin_addr);
-
+        
+        LOG_WNL(ip_address);
+        LOG_WNL(port);
         int connectRes = connect(sock, (sockaddr *)&hint, sizeof(hint));
         if (connectRes == -1)
         {
-            return 1;
+            return false;
         }
 
-        char buf[4096];
-
-        int sendRes = send(sock, data, data_size + 1, 0);
+        
+        int sendRes = send(sock, data, data_size, 0);
+        
         if (sendRes == -1)
         {
             std::cout << "Could not send to server! Whoops!\r\n";
             return false;
-        }
-
-        memset(buf, 0, 4096);
-        int bytesReceived = recv(sock, buf, 4096, 0);
-        if (bytesReceived == -1)
-        {
-            std::cout << "There was an error getting response from server\r\n";
-            return false;
-        }
-        else
-        {
-            std::cout << "SERVER> " << std::string(buf, bytesReceived) << "\r\n";
         }
 
         close(sock);
@@ -97,11 +91,13 @@ namespace BlockchainNode
 
     void Communicator::deal_with_client(Communicator *communicator, int client_socket)
     {
+        LOG_WNL("HOJ1");
         uint8_t buf[4096];
-
         memset(buf, 0, 4096);
+        LOG_WNL("HOJ2");
 
         int bytesReceived = recv(client_socket, buf, 4096, 0);
+        LOG_WNL("HOJ3");
         if (bytesReceived == -1)
         {
             LOG_WNL("Error in recv(). Quitting");
@@ -114,9 +110,10 @@ namespace BlockchainNode
             return;
         }
 
-        LOG_WNL("Data received: " << std::string((char *)buf, 0, bytesReceived));
+        LOG_WNL("Data received of size " << bytesReceived);
 
         communicator->_on_message_received_callback(buf, bytesReceived);
+        LOG_WNL("HUE");
 
         close(client_socket);
     }

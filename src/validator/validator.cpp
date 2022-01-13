@@ -5,6 +5,7 @@
 #include "../digital_signature_manager/digital_signature_manager.hpp"
 #include "../debug/logger/logger.hpp"
 #include "../hasher/hasher.hpp"
+#include "../format_converter/format_converter.hpp"
 
 namespace BlockchainNode
 {
@@ -19,16 +20,12 @@ namespace BlockchainNode
     {
         std::string hash = Hasher::hash_transaction(transaction);
 
-        if (hash.substr(0, 32) != std::string((char *)transaction.hash, 32))
+        if (hash != transaction.hash)
             return false;
 
-        int res = DigitalSignatureManager::verify_signature(
-            (uint8_t *)transaction.sender_public_key,
-            (uint8_t *)transaction.sender_signature,
-            transaction.sender_signature_len,
-            (uint8_t *)transaction.hash);
 
-        LOG_WNL((res ? "Is valid" : "Is not valid"));
+        int res = DigitalSignatureManager::verify_transaction_signature(transaction);
+
         return true;
     }
 

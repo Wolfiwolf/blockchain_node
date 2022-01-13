@@ -17,7 +17,7 @@ namespace BlockchainNode {
     public:
         Communicator();
 
-        void start_listening(int litening_port);
+        void start_listening(int listening_port);
         bool send_to(const char *ip_address, int port, const char *data, int data_size);
         void set_on_message_received_callback(void (*on_message_received_callback)(uint8_t *data, int data_size));
     private:

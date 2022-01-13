@@ -2,18 +2,20 @@
 #define TRANSACTION_H
 
 #include <string>
+#include <vector>
+#include "transaction_in.hpp"
+#include "transaction_out.hpp"
 
 namespace BlockchainNode {
 
     struct Transaction {
         unsigned long int timestamp;
-        uint8_t sender_signature[72];
-        size_t sender_signature_len;
-        uint8_t hash[32];
-        uint8_t sender_public_key[33];
-        uint8_t receiver_public_key[33];
-        int amount;
+        std::string sender_signature;
+        std::string sender_public_key;
+        std::string hash;
         int gas;
+        std::vector<TxIn> tx_ins;
+        std::vector<TxOut> tx_outs;
     };
 
 }

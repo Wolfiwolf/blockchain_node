@@ -11,6 +11,7 @@
 #include "../json_operations/json_operations.hpp"
 #include "../storage/storage.hpp"
 #include "../application_manager/application_manager.hpp"
+#include "../format_converter/format_converter.hpp"
 
 using namespace web::http::experimental::listener;
 using namespace web::http;
@@ -58,17 +59,27 @@ namespace BlockchainNode
                 str += (char)l;
             }
 
-            TransactionWeb transaction;
-            transaction.timestamp = JsonOperations::get_int_value(str, "timestamp");
-            transaction.sender_signature = JsonOperations::get_str_value(str, "senderSignature");
-            transaction.sender_signature_len = JsonOperations::get_int_value(str, "senderSignatureLen");
-            transaction.hash = JsonOperations::get_str_value(str, "hash");
-            transaction.sender_public_key = JsonOperations::get_str_value(str, "senderPublicKey");
-            transaction.receiver_public_key = JsonOperations::get_str_value(str, "receiverPublicKey");
-            transaction.amount = JsonOperations::get_int_value(str, "amount");
-            transaction.gas = JsonOperations::get_int_value(str, "gas");
+            Transaction transaction = JsonOperations::get_transaction(str);
 
             on_new_transaction_request(&request, transaction);
+        }
+        else if (path_parts[0] == "new-node")
+        {
+            long l;
+            std::string str;
+            while (true)
+            {
+                l = request.body().read().get();
+                if (l == -1)
+                    break;
+                str += (char)l;
+            }
+
+            BlockchainNodeContactInfo nodeInfo;
+            nodeInfo.ip_address = JsonOperations::get_str_value(str, "ipAddress");
+            nodeInfo.port = JsonOperations::get_int_value(str, "port");
+
+            on_new_node_request(&request, nodeInfo);
         }
     }
 
@@ -78,11 +89,11 @@ namespace BlockchainNode
 
         std::vector<std::string> path_parts = get_path_parts(path);
 
-        if (path_parts[0] == "balance-of")
+        if (path_parts[0] == "unspent-transactions")
         {
             if (path_parts.size() == 2)
             {
-                on_balance_of_request(&request, path_parts[1]);
+                on_unspent_transactions_request(&request, path_parts[1]);
                 return;
             }
         }
@@ -90,33 +101,54 @@ namespace BlockchainNode
         request.reply(status_codes::NotFound);
     }
 
-    void RestApiServer::on_balance_of_request(http_request *request, const std::string &address)
+    void RestApiServer::on_unspent_transactions_request(http_request *request, const std::string &public_key)
     {
-        request->reply(status_codes::OK, "1000000");
+        std::vector<TxInWithAmount> tx_in_amounts = Storage::get_public_key_unspent_transactions(public_key);
+
+        json::value postParameters = json::value::array();
+
+        std::string json_str("[ ");
+
+        int i = 0;
+        for (const TxInWithAmount &tx_in : tx_in_amounts)
+        {
+            json_str += "{ \"txIn\": ";
+            json_str += JsonOperations::tx_in_to_json(tx_in.tx_in);
+            json_str += ", \"amount\": " + std::to_string(tx_in.amount);
+            json_str += " }";
+
+            if (++i != tx_in_amounts.size())
+            {
+                json_str += ", ";
+            }
+        }
+
+        json_str += " ]";
+
+        request->reply(status_codes::OK, json_str);
     }
 
-    void RestApiServer::on_new_transaction_request(http_request *request, const TransactionWeb &transactionWeb)
+    void RestApiServer::on_new_node_request(http_request *request, const BlockchainNodeContactInfo &nodeContactInfo)
     {
-        Transaction transaction;
+        ApplicationManager *app_manager = ApplicationManager::get_instance();
+        app_manager->add_node(nodeContactInfo);
+        request->reply(status_codes::OK);
+    }
 
-        DigitalSignatureManager::hex_to_signature(transactionWeb.sender_signature, transaction.sender_signature);
-        transaction.sender_signature_len = transactionWeb.sender_signature_len;
-        const char *temp = transactionWeb.hash.c_str();
-        memcpy(transaction.hash, temp, 32);
-        DigitalSignatureManager::hex_to_public_key(transactionWeb.sender_public_key, transaction.sender_public_key);
-        DigitalSignatureManager::hex_to_public_key(transactionWeb.receiver_public_key, transaction.receiver_public_key);
-        transaction.amount = transactionWeb.amount;
-        transaction.gas = transactionWeb.gas;
-        transaction.timestamp = transactionWeb.timestamp;
+    void RestApiServer::on_new_transaction_request(http_request *request, const Transaction &transaction)
+    {
 
         if (Validator::is_transaction_valid(transaction))
         {
+            LOG_WNL("Is valid");
             Storage::add_transaction(transaction);
-            ApplicationManager::broadcast_new_transaction(transaction);
+            ApplicationManager *app_manager = ApplicationManager::get_instance();
+            app_manager->broadcast_new_transaction(transaction);
             request->reply(status_codes::OK);
         }
         else
         {
+            LOG_WNL("Is not valid!");
             request->reply(status_codes::NotAcceptable, "Transaction is not valid!");
         }
     }

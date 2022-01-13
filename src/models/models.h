@@ -3,9 +3,9 @@
 
 #include "block.h"
 #include "transaction.h"
-#include "transaction_web.h"
 #include "wallet.h"
 #include "blockchain_node_contact_info.hpp"
+#include "tx_in_with_amount.hpp"
 
 
 #endif
