@@ -12,6 +12,7 @@ namespace BlockchainNode
         int id;
         int timestamp;
         int nonce;
+        int difficulty;
         std::string hash;
         std::string hash_of_previous_block;
         std::vector<Transaction> transactions;

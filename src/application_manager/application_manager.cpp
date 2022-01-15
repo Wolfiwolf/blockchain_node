@@ -32,6 +32,7 @@ namespace BlockchainNode
         if (_on_new_transaction_received_callback == nullptr)
             throw "on_new_transaction_received_callback is not set!";
 
+
         _communicator.set_on_message_received_callback(on_message_received);
         _communicator.start_listening(_node_port);
     }
@@ -61,41 +62,6 @@ namespace BlockchainNode
         {
             try
             {
-                LOG_WNL("TRANSACTION:");
-                LOG_WNL(transaction.timestamp);
-                LOG_WNL(transaction.sender_signature);
-                LOG_WNL(transaction.sender_public_key);
-                LOG_WNL(transaction.hash);
-                LOG_WNL(transaction.gas);
-
-                LOG_WNL("TXINS:");
-                for (const TxIn &tx_in : transaction.tx_ins)
-                {
-                    LOG_WNL(tx_in.block_id);
-                    LOG_WNL(tx_in.transaction_hash);
-                    LOG_WNL(tx_in.tx_out_index);
-                }
-
-                LOG_WNL("TXOUTS:");
-                for (const TxOut &tx_out : transaction.tx_outs)
-                {
-                    LOG_WNL(tx_out.index);
-                    LOG_WNL(tx_out.amount);
-                    LOG_WNL(tx_out.receiver_public_key);
-                }
-
-                
-
-                /*
-                unsigned long int timestamp;
-                std::string sender_signature;
-                std::string sender_public_key;
-                std::string hash;
-                int gas;
-                std::vector<TxIn> tx_ins;
-                std::vector<TxOut> tx_outs;
-                */
-
                 uint8_t data[1028];
                 int num_of_bytes = MessageSerializer::transaction_to_bytes(transaction, data + 1);
                 data[0] = 0;
@@ -113,10 +79,6 @@ namespace BlockchainNode
         if (data[0] == 0)
         {
             Transaction transaction = MessageSerializer::bytes_to_transaction(data + 1);
-
-            LOG_WNL("TRANSACTION:");
-            LOG_WNL(transaction.hash);
-
             app_manager->_on_new_transaction_received_callback(app_manager, transaction, "");
         }
         else if (data[0] == 0x01)

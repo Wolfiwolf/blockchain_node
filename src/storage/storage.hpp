@@ -17,6 +17,7 @@ namespace BlockchainNode {
         static bool is_transaction_in_storage(const Transaction &transaction);
         static std::vector<TxInWithAmount> get_public_key_unspent_transactions(const std::string &public_key);
 
+        static const std::vector<Block> *get_blocks();
         static const std::vector<Transaction> *get_uncomfirmed_transactions();
 
     private:

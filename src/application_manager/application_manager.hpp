@@ -13,6 +13,7 @@
 
 #include "../models/models.h"
 #include "../communicator/communicator.hpp"
+#include "../miner/miner.hpp"
 
 namespace BlockchainNode
 {

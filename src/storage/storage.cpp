@@ -21,6 +21,7 @@ namespace BlockchainNode
         block.hash = "0x0";
         block.hash_of_previous_block = "0x0";
         block.timestamp = 0;
+        block.difficulty = 3;
 
         Transaction transaction;
 
@@ -40,6 +41,19 @@ namespace BlockchainNode
 
     void Storage::add_block(const Block &block)
     {
+
+        for (const Transaction &transaction : block.transactions)
+        {
+            for (int i = 0; i < _uncomfirmed_transactions.size(); ++i)
+            {
+                if (transaction.hash == _uncomfirmed_transactions[i].hash)
+                {
+                    _uncomfirmed_transactions.erase(_uncomfirmed_transactions.begin() + i);
+                    break;
+                }
+            }
+        }
+
         _blocks.push_back(block);
     }
 
@@ -81,6 +95,11 @@ namespace BlockchainNode
         }
 
         return tx_ins;
+    }
+
+    const std::vector<Block> *Storage::get_blocks()
+    {
+        return &_blocks;
     }
 
     const std::vector<Transaction> *Storage::get_uncomfirmed_transactions()

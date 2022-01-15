@@ -37,8 +37,6 @@ namespace BlockchainNode
         _listener->support(methods::GET, handle_get_request);
         _listener->support(methods::POST, handle_post_request);
         _listener->open().wait();
-
-        LOG_WNL("REST API running on " << url);
     }
 
     void RestApiServer::handle_post_request(http_request request)
@@ -46,7 +44,6 @@ namespace BlockchainNode
         std::string path = request.request_uri().path();
         std::vector<std::string> path_parts = get_path_parts(path);
 
-        LOG_WNL(path);
         if (path_parts[0] == "new-transaction")
         {
             long l;
@@ -140,15 +137,37 @@ namespace BlockchainNode
 
         if (Validator::is_transaction_valid(transaction))
         {
-            LOG_WNL("Is valid");
             Storage::add_transaction(transaction);
             ApplicationManager *app_manager = ApplicationManager::get_instance();
             app_manager->broadcast_new_transaction(transaction);
             request->reply(status_codes::OK);
+
+            const std::vector<BlockchainNode::Transaction> *transactions = BlockchainNode::Storage::get_uncomfirmed_transactions();
+            if ((*transactions).size() < 3)
+                return;
+
+            const std::vector<BlockchainNode::Block> *blocks = BlockchainNode::Storage::get_blocks();
+
+            BlockchainNode::Block block;
+            block.id = (*blocks).back().id;
+            block.nonce = 0;
+            block.hash = "0x0";
+            block.hash_of_previous_block = (*blocks).back().hash;
+            block.difficulty = 3;
+
+            BlockchainNode::Transaction transaction;
+
+            for (const BlockchainNode::Transaction &transaction : *transactions)
+            {
+                block.transactions.push_back(transaction);
+            }
+
+            Miner *miner = Miner::get_instance();
+            if (!miner->is_minning())
+                miner->start_mining_block(block);
         }
         else
         {
-            LOG_WNL("Is not valid!");
             request->reply(status_codes::NotAcceptable, "Transaction is not valid!");
         }
     }

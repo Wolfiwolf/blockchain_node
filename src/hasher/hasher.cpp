@@ -17,16 +17,16 @@ namespace BlockchainNode
         block.timestamp = std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count();
 
         std::string hash = Vendor::sha256(std::to_string(block.id));
+        hash = Vendor::sha256(std::to_string(block.nonce) + hash);
         hash = Vendor::sha256(std::to_string(block.timestamp) + hash);
         hash = Vendor::sha256(std::to_string(block.nonce) + hash);
         hash = Vendor::sha256(block.hash_of_previous_block + hash);
         for (const Transaction &transaction : block.transactions)
         {
-            hash = Hasher::hash_transaction(transaction) + hash;
+            hash = Vendor::sha256(Hasher::hash_transaction(transaction)  + hash);
         }
         
-        block.hash = hash;
-        return hash;
+        return "0x" + hash;
     }
 
     std::string Hasher::hash_transaction(const Transaction &transaction)

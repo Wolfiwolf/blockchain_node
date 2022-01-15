@@ -1,8 +1,8 @@
 #include <iostream>
 
-#define DEBUG_MODE 1
+#define LOG_MODE 1
 
-#if DEBUG_MODE == 1
+#if LOG_MODE == 1
 
 
 #define LOG(x) std::cout << x

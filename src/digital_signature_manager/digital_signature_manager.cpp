@@ -56,15 +56,7 @@ namespace BlockchainNode
         LOG_NL();
 
         LOG_WNL("PUBLIC KEY:");
-        for (int i = 0; i < 33; ++i)
-        {
-            char l_pCharRes[3];
-            sprintf(l_pCharRes, "%X", (int)pubkey_serialized[i]);
-            std::string temp(l_pCharRes);
-
-            LOG((temp.size() == 1 ? "0" + temp : temp));
-        }
-        LOG_NL();
+        LOG_WNL(FormatConverter::bin_to_hex(pubkey_serialized, 33));
 
         Wallet wal;
         memcpy(wal.publicKey, pubkey_serialized, 33);
@@ -86,7 +78,6 @@ namespace BlockchainNode
         uint8_t hash_as_bin[32];
         FormatConverter::hex_to_bin(transaction->hash, hash_as_bin);
 
-        
         secp256k1_ecdsa_sign(ctx, &sig, hash_as_bin, private_key, NULL, NULL);
         uint8_t signature[72];
         size_t signature_size;
@@ -102,7 +93,7 @@ namespace BlockchainNode
     {
         LOG_WNL("SIGNATURE:");
         LOG_WNL(transaction.sender_signature);
-        
+
         secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
         secp256k1_pubkey pubkey;
@@ -114,12 +105,14 @@ namespace BlockchainNode
         uint8_t signature[72];
         FormatConverter::hex_to_bin(transaction.sender_signature, signature);
 
-        if (secp256k1_ec_pubkey_parse(ctx, &pubkey, public_key, 33) == 0) {
+        if (secp256k1_ec_pubkey_parse(ctx, &pubkey, public_key, 33) == 0)
+        {
             LOG_WNL("Error parsing public key!");
         }
 
-        size_t signature_len = (transaction.sender_signature.size() - 2) / 2 ;
-        if (secp256k1_ecdsa_signature_parse_der(ctx, &sig, signature, signature_len) == 0) {
+        size_t signature_len = (transaction.sender_signature.size() - 2) / 2;
+        if (secp256k1_ecdsa_signature_parse_der(ctx, &sig, signature, signature_len) == 0)
+        {
             LOG_WNL("Error parsing signature!");
         }
 
@@ -143,7 +136,7 @@ namespace BlockchainNode
         secp256k1_context_destroy(ctx);
     }
 
-    void DigitalSignatureManager::generate_private_key(uint8_t *privateKey)
+    void DigitalSignatureManager::generate_private_key(uint8_t *private_key)
     {
         const char hex_chars[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
@@ -153,19 +146,10 @@ namespace BlockchainNode
 
         for (int i = 0; i < 32; ++i)
         {
-            privateKey[i] = dist(rng);
+            private_key[i] = dist(rng);
         }
-
 
         LOG_WNL("PRIVATE KEY:");
-        for (int i = 0; i < 32; ++i)
-        {
-            char l_pCharRes[3];
-            sprintf(l_pCharRes, "%X", (int)privateKey[i]);
-            std::string temp(l_pCharRes);
-
-            LOG((temp.size() == 1 ? "0" + temp : temp));
-        }
-        LOG_NL();
+        LOG_WNL(FormatConverter::bin_to_hex(private_key, 32));
     }
 }

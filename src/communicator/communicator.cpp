@@ -36,9 +36,7 @@ namespace BlockchainNode
             sockaddr_in client;
             socklen_t clientSize = sizeof(client);
 
-            LOG_WNL("Waiting fro connection...");
             int client_socket = accept(listening, (sockaddr *)&client, &clientSize);
-            LOG_WNL("Connected!");
 
             std::thread thrd(deal_with_client, this, client_socket);
             thrd.detach();
@@ -72,10 +70,7 @@ namespace BlockchainNode
         int sendRes = send(sock, data, data_size, 0);
         
         if (sendRes == -1)
-        {
-            std::cout << "Could not send to server! Whoops!\r\n";
             return false;
-        }
 
         close(sock);
         
@@ -93,20 +88,12 @@ namespace BlockchainNode
         memset(buf, 0, 4096);
 
         int bytesReceived = recv(client_socket, buf, 4096, 0);
-        LOG_WNL("HOJ3");
+
         if (bytesReceived == -1)
-        {
-            LOG_WNL("Error in recv(). Quitting");
             return;
-        }
 
         if (bytesReceived == 0)
-        {
-            LOG_WNL("Client disconnected");
             return;
-        }
-
-        LOG_WNL("Data received of size " << bytesReceived);
 
         communicator->_on_message_received_callback(buf, bytesReceived);
 

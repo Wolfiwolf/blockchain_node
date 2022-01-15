@@ -4,6 +4,7 @@
 #include "../validator/validator.hpp"
 #include "../storage/storage.hpp"
 #include "../debug/logger/logger.hpp"
+#include "../miner/miner.hpp"
 
 namespace BlockchainNode
 {
@@ -26,35 +27,8 @@ namespace BlockchainNode
             const BlockchainNode::Transaction &new_transaction,
             const std::string &sender_address)
         {
-            LOG_WNL("TRANSACTION:");
-            LOG_WNL(new_transaction.timestamp);
-            LOG_WNL(new_transaction.sender_signature);
-            LOG_WNL(new_transaction.sender_public_key);
-            LOG_WNL(new_transaction.hash);
-            LOG_WNL(new_transaction.gas);
-            LOG_WNL("TXINS:");
-            for (const TxIn &tx_in : new_transaction.tx_ins)
-            {
-                LOG_WNL(tx_in.block_id);
-                LOG_WNL(tx_in.transaction_hash);
-                LOG_WNL(tx_in.tx_out_index);
-            }
-
-            LOG_WNL("TXOUTS:");
-            for (const TxOut &tx_out : new_transaction.tx_outs)
-            {
-                LOG_WNL(tx_out.index);
-                LOG_WNL(tx_out.amount);
-                LOG_WNL(tx_out.receiver_public_key);
-            }
-
             if (!Validator::is_transaction_valid(new_transaction))
-            {
-                LOG_WNL("TRANSACTION IS NOT VALID!");
                 return;
-            }
-
-            LOG_WNL("TRANSACTION IS VALID!");
 
             if (!Storage::is_transaction_in_storage(new_transaction))
             {
@@ -62,7 +36,30 @@ namespace BlockchainNode
                 app_manager->broadcast_new_transaction(new_transaction);
             }
 
-            const std::vector<Transaction> *transactions = Storage::get_uncomfirmed_transactions();
+            const std::vector<BlockchainNode::Transaction> *transactions = BlockchainNode::Storage::get_uncomfirmed_transactions();
+            if ((*transactions).size() < 3)
+                return;
+
+            const std::vector<BlockchainNode::Block> *blocks = BlockchainNode::Storage::get_blocks();
+
+            BlockchainNode::Block block;
+            block.id = (*blocks).back().id;
+            block.nonce = 0;
+            block.hash = "0x0";
+            block.hash_of_previous_block = (*blocks).back().hash;
+            block.difficulty = 3;
+
+            BlockchainNode::Transaction transaction;
+
+            for (const BlockchainNode::Transaction &transaction : *transactions)
+            {
+                block.transactions.push_back(transaction);
+            }
+
+            Miner *miner = Miner::get_instance();
+            if (!miner->is_minning())
+                miner->start_mining_block(block);
+            
         }
 
     }
