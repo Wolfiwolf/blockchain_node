@@ -62,8 +62,6 @@ namespace BlockchainNode
         hint.sin_port = htons(port);
         inet_pton(AF_INET, ipAddress.c_str(), &hint.sin_addr);
         
-        LOG_WNL(ip_address);
-        LOG_WNL(port);
         int connectRes = connect(sock, (sockaddr *)&hint, sizeof(hint));
         if (connectRes == -1)
         {
@@ -91,10 +89,8 @@ namespace BlockchainNode
 
     void Communicator::deal_with_client(Communicator *communicator, int client_socket)
     {
-        LOG_WNL("HOJ1");
         uint8_t buf[4096];
         memset(buf, 0, 4096);
-        LOG_WNL("HOJ2");
 
         int bytesReceived = recv(client_socket, buf, 4096, 0);
         LOG_WNL("HOJ3");
@@ -113,7 +109,6 @@ namespace BlockchainNode
         LOG_WNL("Data received of size " << bytesReceived);
 
         communicator->_on_message_received_callback(buf, bytesReceived);
-        LOG_WNL("HUE");
 
         close(client_socket);
     }

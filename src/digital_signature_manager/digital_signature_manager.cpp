@@ -100,6 +100,9 @@ namespace BlockchainNode
 
     bool DigitalSignatureManager::verify_transaction_signature(const Transaction &transaction)
     {
+        LOG_WNL("SIGNATURE:");
+        LOG_WNL(transaction.sender_signature);
+        
         secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
         secp256k1_pubkey pubkey;
@@ -115,7 +118,7 @@ namespace BlockchainNode
             LOG_WNL("Error parsing public key!");
         }
 
-        size_t signature_len = transaction.sender_signature.size() / 2 - 2;
+        size_t signature_len = (transaction.sender_signature.size() - 2) / 2 ;
         if (secp256k1_ecdsa_signature_parse_der(ctx, &sig, signature, signature_len) == 0) {
             LOG_WNL("Error parsing signature!");
         }

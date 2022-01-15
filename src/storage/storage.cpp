@@ -6,6 +6,7 @@
 #include "../format_converter/format_converter.hpp"
 #include "../models/models.h"
 #include "../debug/logger/logger.hpp"
+#include "../hasher/hasher.hpp"
 
 namespace BlockchainNode
 {
@@ -29,6 +30,8 @@ namespace BlockchainNode
         tx_out.receiver_public_key = "0x031BE9DA01F032DFA7B065495F79750D10985D2E1DBD846A53D75198600BE61F4E";
 
         transaction.tx_outs.push_back(tx_out);
+
+        transaction.hash = Hasher::hash_transaction(transaction);
 
         block.transactions.push_back(transaction);
 
@@ -70,7 +73,7 @@ namespace BlockchainNode
 
                         tx_in_with_amount.amount = tx_out.amount;
                         tx_in_with_amount.tx_in = tx_in;
-                        
+
                         tx_ins.push_back(tx_in_with_amount);
                     }
                 }

@@ -2,10 +2,12 @@
 
 #include <string>
 #include <cstring>
+#include "../debug/logger/logger.hpp"
 
-namespace BlockchainNode {
+namespace BlockchainNode
+{
 
-    void MessageSerializer::block_to_bytes(const Block &block, uint8_t *output_bytes) 
+    void MessageSerializer::block_to_bytes(const Block &block, uint8_t *output_bytes)
     {
         int offset = 0;
 
@@ -26,10 +28,9 @@ namespace BlockchainNode {
 
         memcpy(output_bytes + offset, &block.transactions, (64 + 4 + 4) * 3);
         offset += (64 + 4 + 4) * 3;
-
     }
 
-    Block MessageSerializer::bytes_to_block(const uint8_t *bytes) 
+    Block MessageSerializer::bytes_to_block(const uint8_t *bytes)
     {
         Block block;
 
@@ -38,7 +39,7 @@ namespace BlockchainNode {
         memcpy(&block.id, bytes + offset, sizeof(int));
         offset += sizeof(int);
 
-        memcpy(&block.nonce, bytes + offset,  sizeof(int));
+        memcpy(&block.nonce, bytes + offset, sizeof(int));
         offset += sizeof(int);
 
         memcpy(&block.hash, bytes + offset, 32);
@@ -59,7 +60,7 @@ namespace BlockchainNode {
     int MessageSerializer::transaction_to_bytes(const Transaction &transaction, uint8_t *output_bytes)
     {
         int offset = 0;
-        
+
         memcpy(output_bytes + offset, &transaction.timestamp, 8);
         offset += 8;
 
@@ -67,19 +68,14 @@ namespace BlockchainNode {
         memcpy(output_bytes + offset, &size, 4);
         offset += 4;
 
-        memcpy(output_bytes + offset, &transaction.sender_signature, size);
+        memcpy(output_bytes + offset, transaction.sender_signature.c_str(), size);
         offset += size;
 
-        size = transaction.sender_public_key.size();
-        memcpy(output_bytes + offset, &size, 4);
-        offset += 4;
+        memcpy(output_bytes + offset, transaction.sender_public_key.c_str(), transaction.sender_public_key.size());
+        offset += transaction.sender_public_key.size();
 
-        memcpy(output_bytes + offset, &transaction.sender_public_key, size);
-        offset += size;
-
-        size = transaction.hash.size();
-        memcpy(output_bytes + offset, &transaction.hash, size);
-        offset += size;
+        memcpy(output_bytes + offset, transaction.hash.c_str(), transaction.hash.size());
+        offset += transaction.hash.size();
 
         memcpy(output_bytes + offset, &transaction.gas, 4);
         offset += 4;
@@ -96,9 +92,8 @@ namespace BlockchainNode {
             memcpy(output_bytes + offset, &tx_in.tx_out_index, 4);
             offset += 4;
 
-            size = tx_in.transaction_hash.size();
-            memcpy(output_bytes + offset, &tx_in.transaction_hash, size);
-            offset += size;
+            memcpy(output_bytes + offset, tx_in.transaction_hash.c_str(), tx_in.transaction_hash.size());
+            offset += tx_in.transaction_hash.size();
         }
 
         num_of_transaction_ins = transaction.tx_outs.size();
@@ -113,9 +108,8 @@ namespace BlockchainNode {
             memcpy(output_bytes + offset, &tx_out.amount, 8);
             offset += 8;
 
-            size = tx_out.receiver_public_key.size();
-            memcpy(output_bytes + offset, &tx_out.receiver_public_key, size);
-            offset += size;
+            memcpy(output_bytes + offset, tx_out.receiver_public_key.c_str(), 33 * 2 + 2);
+            offset += 33 * 2 + 2;
         }
 
         return offset;
@@ -124,9 +118,9 @@ namespace BlockchainNode {
     Transaction MessageSerializer::bytes_to_transaction(const uint8_t *bytes)
     {
         Transaction transaction;
-        
+
         int offset = 0;
-        
+
         memcpy(&transaction.timestamp, bytes + offset, 8);
         offset += 8;
 
@@ -134,19 +128,18 @@ namespace BlockchainNode {
         memcpy(&size, bytes + offset, 4);
         offset += 4;
 
-        memcpy(&transaction.sender_signature, bytes + offset, size);
+        char temp[512];
+        memcpy(temp, bytes + offset, size);
+        transaction.sender_signature = std::string(temp, size);
         offset += size;
 
-        size;
-        memcpy(&size, bytes + offset, 4);
-        offset += 4;
+        memcpy(temp, bytes + offset, 33 * 2 + 2);
+        transaction.sender_public_key = std::string(temp, 33 * 2 + 2);
+        offset += 33 * 2 + 2;
 
-        memcpy(&transaction.sender_public_key, bytes + offset, size);
-        offset += size;
-
-        size = 32 * 2 + 2;
-        memcpy(&transaction.hash, bytes + offset, size);
-        offset += size;
+        memcpy(temp, bytes + offset, 32 * 2 + 2);
+        transaction.hash = std::string(temp, 32 * 2 + 2);
+        offset += 32 * 2 + 2;
 
         memcpy(&transaction.gas, bytes + offset, 4);
         offset += 4;
@@ -164,18 +157,17 @@ namespace BlockchainNode {
             memcpy(&tx_in.tx_out_index, bytes + offset, 4);
             offset += 4;
 
-            size = 32 * 2 + 2;
-            memcpy(&tx_in.transaction_hash, bytes + offset, size);
-            offset += size;
+            memcpy(temp, bytes + offset, 32 * 2 + 2);
+            tx_in.transaction_hash = std::string(temp, 32 * 2 + 2);
+            offset += 32 * 2 + 2;
 
             transaction.tx_ins.push_back(tx_in);
         }
 
-        num_of_transaction_ins = transaction.tx_outs.size();
-        memcpy(&num_of_transaction_ins, bytes + offset, 4);
+        int num_of_transaction_outs;
+        memcpy(&num_of_transaction_outs, bytes + offset, 4);
         offset += 4;
-
-        for (int i = 0; i < num_of_transaction_ins; ++i)
+        for (int i = 0; i < num_of_transaction_outs; ++i)
         {
             TxOut tx_out;
 
@@ -185,13 +177,14 @@ namespace BlockchainNode {
             memcpy(&tx_out.amount, bytes + offset, 8);
             offset += 8;
 
-            size = 33 * 2 + 2;
-            memcpy(&tx_out.receiver_public_key, bytes + offset, size);
-            offset += size;
+            memcpy(temp, bytes + offset, 33 * 2 + 2);
+            tx_out.receiver_public_key = std::string(temp, 33 * 2 + 2);
+            offset += 33 * 2 + 2;
+
+            transaction.tx_outs.push_back(tx_out);
         }
 
         return transaction;
     }
-
 
 }

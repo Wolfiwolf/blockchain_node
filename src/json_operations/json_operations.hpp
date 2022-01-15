@@ -9,7 +9,7 @@ namespace BlockchainNode
     class JsonOperations {
     public:
         static int get_int_value(const std::string& json_str, const std::string& key);
-        static unsigned long int get_long_unsigned_int_value(const std::string &json_str, const std::string &key);
+        static unsigned long int get_unsigned_long_int_value(const std::string &json_str, const std::string &key);
         static std::string get_str_value(const std::string& json_str, const std::string& key);
 
         static Transaction get_transaction(const std::string &json_str);

@@ -19,7 +19,7 @@ namespace BlockchainNode
         return -1;
     }
 
-    unsigned long int JsonOperations::get_long_unsigned_int_value(const std::string &json_str, const std::string &key)
+    unsigned long int JsonOperations::get_unsigned_long_int_value(const std::string &json_str, const std::string &key)
     {
         std::regex reg("\"" + key + "\":\\s(-*\\d+)");
         std::smatch match;
@@ -33,7 +33,7 @@ namespace BlockchainNode
 
     std::string JsonOperations::get_str_value(const std::string &json_str, const std::string &key)
     {
-        std::regex reg("\"" + key + "\":\\s\"(.+)\"");
+        std::regex reg("\"" + key + "\":\\s\"([^\"]+)\"");
         std::smatch match;
         std::regex_search(json_str, match, reg);
         if (!match.empty())
@@ -47,7 +47,7 @@ namespace BlockchainNode
     {
         Transaction transaction;
 
-        transaction.timestamp = JsonOperations::get_long_unsigned_int_value(json_str, "timestamp");
+        transaction.timestamp = JsonOperations::get_unsigned_long_int_value(json_str, "timestamp");
         transaction.sender_signature = JsonOperations::get_str_value(json_str, "senderSignature");
         transaction.sender_public_key = JsonOperations::get_str_value(json_str, "senderPublicKey");
         transaction.hash = JsonOperations::get_str_value(json_str, "hash");
@@ -58,28 +58,55 @@ namespace BlockchainNode
         std::regex_search(json_str, match, reg);
         std::string tx_ins_json = match[1];
 
-        
         std::vector<std::string> tx_in_jsons;
         std::regex reg2("(\\{[^}]+\\})");
         std::smatch match2;
-        std::string strr = json_str;
+        std::string strr = tx_ins_json;
         while (std::regex_search(strr, match2, reg2))
         {
             if (!match2.empty())
             {
-                LOG_WNL(match[1]);
-                tx_in_jsons.push_back(match[1]);
+                tx_in_jsons.push_back(match2[1]);
                 strr = match2.suffix();
             }
         }
 
-        /*
-        std::string sender_public_key;
-        std::string hash;
-        int gas;
-        std::vector<TxIn> tx_ins;
-        std::vector<TxOut> tx_outs;
-        */
+        for (const std::string &tx_in_json : tx_in_jsons)
+        {
+            TxIn tx_in;
+            tx_in.block_id = JsonOperations::get_int_value(tx_in_json, "blockId");
+            tx_in.transaction_hash = JsonOperations::get_str_value(tx_in_json, "transactionHash");
+            tx_in.tx_out_index = JsonOperations::get_int_value(tx_in_json, "txOutIndex");
+            transaction.tx_ins.push_back(tx_in);
+        }
+
+        std::regex reg4("\"txOuts\": \\[([^\\]]+)\\]");
+        std::smatch match4;
+        std::regex_search(json_str, match4, reg4);
+        std::string tx_outs_json = match4[1];
+
+
+        std::vector<std::string> tx_out_jsons;
+        std::regex reg3("(\\{[^}]+\\})");
+        std::smatch match3;
+        strr = tx_outs_json;
+        while (std::regex_search(strr, match3, reg3))
+        {
+            if (!match3.empty())
+            {
+                tx_out_jsons.push_back(match3[1]);
+                strr = match3.suffix();
+            }
+        }
+
+        for (const std::string &tx_out_json : tx_out_jsons)
+        {
+            TxOut tx_out;
+            tx_out.index = JsonOperations::get_int_value(tx_out_json, "index");
+            tx_out.amount = JsonOperations::get_unsigned_long_int_value(tx_out_json, "amount");
+            tx_out.receiver_public_key = JsonOperations::get_str_value(tx_out_json, "receiverPublicKey");
+            transaction.tx_outs.push_back(tx_out);
+        }
 
         return transaction;
     }
@@ -134,12 +161,11 @@ namespace BlockchainNode
             res.tx_in = tx_ins[i];
             result.push_back(res);
         }
-        
 
         return result;
     }
 
-    std::string JsonOperations::transaction_to_json(const Transaction& transaction)
+    std::string JsonOperations::transaction_to_json(const Transaction &transaction)
     {
         std::string json_str("{ ");
         json_str += "\"timestamp\": ";
@@ -154,7 +180,7 @@ namespace BlockchainNode
         json_str += std::to_string(transaction.gas) + ", ";
 
         json_str += "\"txIns\": [ ";
-        
+
         int i = 0;
         for (const TxIn &tx_in : transaction.tx_ins)
         {
@@ -180,11 +206,11 @@ namespace BlockchainNode
         }
 
         json_str += " ] }";
-        
+
         return json_str;
     }
 
-    std::string JsonOperations::tx_in_to_json(const TxIn& tx_in)
+    std::string JsonOperations::tx_in_to_json(const TxIn &tx_in)
     {
         std::string json_str("{ ");
         json_str += "\"blockId\": ";
@@ -197,7 +223,7 @@ namespace BlockchainNode
         return json_str;
     }
 
-    std::string JsonOperations::tx_out_to_json(const TxOut& tx_out)
+    std::string JsonOperations::tx_out_to_json(const TxOut &tx_out)
     {
         std::string json_str("{ ");
         json_str += "\"index\": ";
