@@ -42,7 +42,7 @@ namespace BlockchainNode
 
     void RestApiServer::start_server(int listening_port)
     {
-        std::string url = std::string("http://localhost:") + std::to_string(listening_port);
+        std::string url = std::string("http://0.0.0.0:") + std::to_string(listening_port);
 
         _listener = new http_listener(url);
         _listener->support(methods::GET, handle_get_request);
