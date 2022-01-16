@@ -93,6 +93,7 @@ namespace BlockchainNode
 
     void RestApiServer::handle_get_request(http_request request)
     {
+        LOG_WNL("GET RECEIVED");
         std::string path = request.request_uri().path();
 
         std::vector<std::string> path_parts = get_path_parts(path);
