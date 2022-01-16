@@ -11,11 +11,8 @@ namespace BlockchainNode
     {
     }
 
-    std::string Hasher::hash_block(Block &block)
+    std::string Hasher::hash_block(const Block &block)
     {
-        const auto p1 = std::chrono::system_clock::now();
-        block.timestamp = std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count();
-
         std::string hash = Vendor::sha256(std::to_string(block.id));
         hash = Vendor::sha256(std::to_string(block.nonce) + hash);
         hash = Vendor::sha256(std::to_string(block.timestamp) + hash);

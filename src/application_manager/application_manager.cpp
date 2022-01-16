@@ -2,29 +2,29 @@
 #include "../message_serializer/message_serializer.hpp"
 #include "../debug/logger/logger.hpp"
 #include "../storage/storage.hpp"
+#include "../digital_signature_manager/digital_signature_manager.hpp"
 
 namespace BlockchainNode
 {
-    ApplicationManager *ApplicationManager::_instance;
+    NetworkCommunicator *NetworkCommunicator::_instance;
 
-    ApplicationManager::ApplicationManager(int node_port)
+    NetworkCommunicator::NetworkCommunicator(int node_port)
         : _node_port(node_port),
           _on_new_block_received_callback(nullptr),
           _on_new_transaction_received_callback(nullptr)
     {
         _instance = this;
-        Storage::init();
     }
-    ApplicationManager::~ApplicationManager()
+    NetworkCommunicator::~NetworkCommunicator()
     {
     }
 
-    ApplicationManager *ApplicationManager::get_instance()
+    NetworkCommunicator *NetworkCommunicator::get_instance()
     {
         return _instance;
     }
 
-    void ApplicationManager::start()
+    void NetworkCommunicator::start()
     {
         if (_on_new_block_received_callback == nullptr)
             throw "on_new_block_received_callback is not set!";
@@ -32,31 +32,44 @@ namespace BlockchainNode
         if (_on_new_transaction_received_callback == nullptr)
             throw "on_new_transaction_received_callback is not set!";
 
-
         _communicator.set_on_message_received_callback(on_message_received);
         _communicator.start_listening(_node_port);
     }
 
-    void ApplicationManager::add_node(const BlockchainNodeContactInfo &nodeContactInfo)
+    void NetworkCommunicator::add_node(const BlockchainNodeContactInfo &nodeContactInfo)
     {
         _other_nodes.push_back(nodeContactInfo);
     }
 
-    void ApplicationManager::set_on_new_block_received_callback(void (*on_new_block_received_callback)(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Block &new_block, const std::string &sender_address))
+    void NetworkCommunicator::set_on_new_block_received_callback(void (*on_new_block_received_callback)(BlockchainNode::NetworkCommunicator *app_manager, const BlockchainNode::Block &new_block, const std::string &sender_address))
     {
         _on_new_block_received_callback = on_new_block_received_callback;
     }
 
-    void ApplicationManager::set_on_new_transaction_received_callback(void (*on_new_transaction_received_callback)(BlockchainNode::ApplicationManager *app_manager, const BlockchainNode::Transaction &new_transaction, const std::string &sender_address))
+    void NetworkCommunicator::set_on_new_transaction_received_callback(void (*on_new_transaction_received_callback)(BlockchainNode::NetworkCommunicator *app_manager, const BlockchainNode::Transaction &new_transaction, const std::string &sender_address))
     {
         _on_new_transaction_received_callback = on_new_transaction_received_callback;
     }
 
-    void ApplicationManager::broadcast_new_block(const Block &block)
+    void NetworkCommunicator::broadcast_new_block(const Block &block)
     {
+        for (const BlockchainNodeContactInfo &node : _other_nodes)
+        {
+            try
+            {
+                LOG_WNL("SENDING BLOCK");
+                uint8_t data[4096];
+                int num_of_bytes = MessageSerializer::block_to_bytes(block, data + 1);
+                data[0] = 0x01;
+                _communicator.send_to(node.ip_address.c_str(), node.port, (char *)data, num_of_bytes + 1);
+            }
+            catch (std::exception e)
+            {
+            }
+        }
     }
 
-    void ApplicationManager::broadcast_new_transaction(const Transaction &transaction)
+    void NetworkCommunicator::broadcast_new_transaction(const Transaction &transaction)
     {
         for (const BlockchainNodeContactInfo &node : _other_nodes)
         {
@@ -73,9 +86,9 @@ namespace BlockchainNode
         }
     }
 
-    void ApplicationManager::on_message_received(uint8_t *data, int data_size)
+    void NetworkCommunicator::on_message_received(uint8_t *data, int data_size)
     {
-        ApplicationManager *app_manager = ApplicationManager::get_instance();
+        NetworkCommunicator *app_manager = NetworkCommunicator::get_instance();
         if (data[0] == 0)
         {
             Transaction transaction = MessageSerializer::bytes_to_transaction(data + 1);

@@ -13,7 +13,7 @@ namespace BlockchainNode
     public:
         Hasher();
 
-        static std::string hash_block(Block &block);
+        static std::string hash_block(const Block &block);
         static std::string hash_transaction(const Transaction &transaction);
     };
 

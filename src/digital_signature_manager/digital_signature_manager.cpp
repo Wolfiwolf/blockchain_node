@@ -58,6 +58,8 @@ namespace BlockchainNode
         LOG_WNL("PUBLIC KEY:");
         LOG_WNL(FormatConverter::bin_to_hex(pubkey_serialized, 33));
 
+        LOG_NL();
+
         Wallet wal;
         memcpy(wal.publicKey, pubkey_serialized, 33);
         memcpy(wal.privateKey, private_key, 32);
@@ -65,12 +67,8 @@ namespace BlockchainNode
         return wal;
     }
 
-    void DigitalSignatureManager::sign_transaction(uint8_t *private_key, Transaction *transaction)
+    void DigitalSignatureManager::sign_transaction(const uint8_t *private_key, Transaction *transaction)
     {
-        std::string hash = Hasher::hash_transaction(*transaction);
-
-        transaction->hash = hash;
-
         secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
         size_t signature_length = 72;
         secp256k1_ecdsa_signature sig;
@@ -78,10 +76,13 @@ namespace BlockchainNode
         uint8_t hash_as_bin[32];
         FormatConverter::hex_to_bin(transaction->hash, hash_as_bin);
 
-        secp256k1_ecdsa_sign(ctx, &sig, hash_as_bin, private_key, NULL, NULL);
+                secp256k1_ecdsa_sign(ctx, &sig, hash_as_bin, private_key, NULL, NULL);
         uint8_t signature[72];
-        size_t signature_size;
-        secp256k1_ecdsa_signature_serialize_der(ctx, signature, &signature_size, &sig);
+        size_t signature_size = 72;
+        if (secp256k1_ecdsa_signature_serialize_der(ctx, signature, &signature_size, &sig) != 1)
+        {
+            LOG_WNL("Error serialising signature");
+        }
 
         int signature_size_int = signature_size;
         transaction->sender_signature = FormatConverter::bin_to_hex(signature, signature_size_int);
@@ -91,9 +92,6 @@ namespace BlockchainNode
 
     bool DigitalSignatureManager::verify_transaction_signature(const Transaction &transaction)
     {
-        LOG_WNL("SIGNATURE:");
-        LOG_WNL(transaction.sender_signature);
-
         secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
         secp256k1_pubkey pubkey;
@@ -122,18 +120,6 @@ namespace BlockchainNode
         int res = secp256k1_ecdsa_verify(ctx, &sig, hash, &pubkey);
 
         return res == 1;
-    }
-
-    void DigitalSignatureManager::sign_data(uint8_t *private_key, uint8_t *data_to_sign, int data_size, uint8_t *output, size_t *sig_size)
-    {
-        secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
-        size_t signature_length = 72;
-        secp256k1_ecdsa_signature sig;
-
-        secp256k1_ecdsa_sign(ctx, &sig, data_to_sign, private_key, NULL, NULL);
-        secp256k1_ecdsa_signature_serialize_der(ctx, output, sig_size, &sig);
-
-        secp256k1_context_destroy(ctx);
     }
 
     void DigitalSignatureManager::generate_private_key(uint8_t *private_key)

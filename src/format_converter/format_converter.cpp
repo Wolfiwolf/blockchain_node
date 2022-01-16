@@ -24,7 +24,7 @@ namespace BlockchainNode
         }
     }
 
-    std::string FormatConverter::bin_to_hex(uint8_t *bin, int bin_size)
+    std::string FormatConverter::bin_to_hex(const uint8_t *bin, int bin_size)
     {
         std::string hex("");
         for (int i = 0; i < bin_size; ++i)

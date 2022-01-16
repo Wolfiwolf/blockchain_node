@@ -15,6 +15,7 @@ namespace BlockchainNode
         int difficulty;
         std::string hash;
         std::string hash_of_previous_block;
+        std::string miner_public_key;
         std::vector<Transaction> transactions;
     };
 

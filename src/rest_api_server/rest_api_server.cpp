@@ -4,6 +4,7 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
+#include <chrono>
 
 #include "../debug/logger/logger.hpp"
 #include "../validator/validator.hpp"
@@ -12,6 +13,8 @@
 #include "../storage/storage.hpp"
 #include "../application_manager/application_manager.hpp"
 #include "../format_converter/format_converter.hpp"
+#include "../config.hpp"
+#include "../hasher/hasher.hpp"
 
 using namespace web::http::experimental::listener;
 using namespace web::http;
@@ -20,13 +23,21 @@ using namespace web;
 namespace BlockchainNode
 {
 
+    RestApiServer *RestApiServer::_instance;
+
     RestApiServer::RestApiServer()
     {
+        _instance = this;
     }
 
     RestApiServer::~RestApiServer()
     {
         delete _listener;
+    }
+
+    RestApiServer *RestApiServer::get_instance()
+    {
+        return _instance;
     }
 
     void RestApiServer::start_server(int listening_port)
@@ -58,7 +69,7 @@ namespace BlockchainNode
 
             Transaction transaction = JsonOperations::get_transaction(str);
 
-            on_new_transaction_request(&request, transaction);
+            RestApiServer::get_instance()->_on_new_transaction_request_callback(&request, transaction);
         }
         else if (path_parts[0] == "new-node")
         {
@@ -76,7 +87,7 @@ namespace BlockchainNode
             nodeInfo.ip_address = JsonOperations::get_str_value(str, "ipAddress");
             nodeInfo.port = JsonOperations::get_int_value(str, "port");
 
-            on_new_node_request(&request, nodeInfo);
+            RestApiServer::get_instance()->_on_new_node_request_callback(&request, nodeInfo);
         }
     }
 
@@ -90,7 +101,7 @@ namespace BlockchainNode
         {
             if (path_parts.size() == 2)
             {
-                on_unspent_transactions_request(&request, path_parts[1]);
+                RestApiServer::get_instance()->_on_unspent_transactions_request_callback(&request, path_parts[1]);
                 return;
             }
         }
@@ -98,78 +109,19 @@ namespace BlockchainNode
         request.reply(status_codes::NotFound);
     }
 
-    void RestApiServer::on_unspent_transactions_request(http_request *request, const std::string &public_key)
+    void RestApiServer::set_on_unspent_transactions_request_callback(void (*on_unspent_transactions_request_callback)(http_request *request, const std::string &public_key))
     {
-        std::vector<TxInWithAmount> tx_in_amounts = Storage::get_public_key_unspent_transactions(public_key);
-
-        json::value postParameters = json::value::array();
-
-        std::string json_str("[ ");
-
-        int i = 0;
-        for (const TxInWithAmount &tx_in : tx_in_amounts)
-        {
-            json_str += "{ \"txIn\": ";
-            json_str += JsonOperations::tx_in_to_json(tx_in.tx_in);
-            json_str += ", \"amount\": " + std::to_string(tx_in.amount);
-            json_str += " }";
-
-            if (++i != tx_in_amounts.size())
-            {
-                json_str += ", ";
-            }
-        }
-
-        json_str += " ]";
-
-        request->reply(status_codes::OK, json_str);
+        _on_unspent_transactions_request_callback = on_unspent_transactions_request_callback;
     }
 
-    void RestApiServer::on_new_node_request(http_request *request, const BlockchainNodeContactInfo &nodeContactInfo)
+    void RestApiServer::set_on_new_node_request_callback(void (*on_new_node_request_callback)(http_request *request, const BlockchainNodeContactInfo &nodeContactInfo))
     {
-        ApplicationManager *app_manager = ApplicationManager::get_instance();
-        app_manager->add_node(nodeContactInfo);
-        request->reply(status_codes::OK);
+        _on_new_node_request_callback = on_new_node_request_callback;
     }
 
-    void RestApiServer::on_new_transaction_request(http_request *request, const Transaction &transaction)
+    void RestApiServer::set_on_new_transaction_request_callback(void (*on_new_transaction_request_callback)(http_request *request, const Transaction &transaction))
     {
-
-        if (Validator::is_transaction_valid(transaction))
-        {
-            Storage::add_transaction(transaction);
-            ApplicationManager *app_manager = ApplicationManager::get_instance();
-            app_manager->broadcast_new_transaction(transaction);
-            request->reply(status_codes::OK);
-
-            const std::vector<BlockchainNode::Transaction> *transactions = BlockchainNode::Storage::get_uncomfirmed_transactions();
-            if ((*transactions).size() < 3)
-                return;
-
-            const std::vector<BlockchainNode::Block> *blocks = BlockchainNode::Storage::get_blocks();
-
-            BlockchainNode::Block block;
-            block.id = (*blocks).back().id;
-            block.nonce = 0;
-            block.hash = "0x0";
-            block.hash_of_previous_block = (*blocks).back().hash;
-            block.difficulty = 3;
-
-            BlockchainNode::Transaction transaction;
-
-            for (const BlockchainNode::Transaction &transaction : *transactions)
-            {
-                block.transactions.push_back(transaction);
-            }
-
-            Miner *miner = Miner::get_instance();
-            if (!miner->is_minning())
-                miner->start_mining_block(block);
-        }
-        else
-        {
-            request->reply(status_codes::NotAcceptable, "Transaction is not valid!");
-        }
+        _on_new_transaction_request_callback = on_new_transaction_request_callback;
     }
 
     std::vector<std::string> RestApiServer::get_path_parts(const std::string &path)

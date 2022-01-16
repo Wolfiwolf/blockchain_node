@@ -10,6 +10,7 @@
 
 namespace BlockchainNode
 {
+    Wallet Storage::_wallet;
     std::vector<Block> Storage::_blocks;
     std::vector<Transaction> Storage::_uncomfirmed_transactions;
 
@@ -18,8 +19,8 @@ namespace BlockchainNode
         Block block;
         block.id = 1;
         block.nonce = 0;
-        block.hash = "0x0";
-        block.hash_of_previous_block = "0x0";
+        block.hash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+        block.hash_of_previous_block = "0x0000000000000000000000000000000000000000000000000000000000000000";
         block.timestamp = 0;
         block.difficulty = 3;
 
@@ -62,8 +63,33 @@ namespace BlockchainNode
         _uncomfirmed_transactions.push_back(transaction);
     }
 
+    void Storage::save_wallet(const Wallet &wallet)
+    {
+        _wallet = wallet;
+    }
+
+    bool Storage::is_block_in_storage(const Block &block)
+    {
+        LOG_WNL("#########");
+        LOG_WNL("CHEKING BLOCK");
+        for (const Block &block_it : _blocks)
+        {
+            LOG_WNL(block_it.id  << " == " << block.id);
+            if (block_it.id == block.id)
+                return true;
+        }
+
+        return false;
+    }
+
     bool Storage::is_transaction_in_storage(const Transaction &transaction)
     {
+        for (const Transaction &transaction_it : _uncomfirmed_transactions)
+        {
+            if (transaction.hash == transaction_it.hash)
+                return true;
+        }
+
         return false;
     }
 
@@ -95,6 +121,11 @@ namespace BlockchainNode
         }
 
         return tx_ins;
+    }
+
+    const Wallet &Storage::get_wallet()
+    {
+        return _wallet;
     }
 
     const std::vector<Block> *Storage::get_blocks()
